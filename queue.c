@@ -10,7 +10,6 @@
  *
  * It uses a singly-linked list to represent the set of queue elements
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,17 +24,27 @@
 queue_t *q_new()
 {
     queue_t *q = malloc(sizeof(queue_t));
-    /* What if malloc returned NULL? */
+    if (q == NULL)
+        /* What if malloc returned NULL? */
+        return NULL;
+
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
     return q;
 }
 
 /* Free all storage used by queue */
 void q_free(queue_t *q)
 {
-    /* How about freeing the list elements and the strings? */
-    /* Free queue structure */
-    free(q);
+    if (q) {
+        /* How about freeing the list elements and the strings? */
+        while (q->head)
+            q_remove_head(q, NULL, 0);
+
+        /* Free queue structure */
+        free(q);
+    }
 }
 
 /*
@@ -48,12 +57,33 @@ void q_free(queue_t *q)
 bool q_insert_head(queue_t *q, char *s)
 {
     list_ele_t *newh;
+
+    if (q == NULL)
+        return false;
+
     /* What should you do if the q is NULL? */
     newh = malloc(sizeof(list_ele_t));
+    if (newh == NULL) {
+        return false;
+    }
+
     /* Don't forget to allocate space for the string and copy it */
+    newh->value = (char *) malloc(strlen(s) + 1);
+    if (newh->value == NULL) {
+        free(newh);
+        return false;
+    }
+
+    strcpy(newh->value, s);
+    q->size++;
+
     /* What if either call to malloc returns NULL? */
     newh->next = q->head;
     q->head = newh;
+
+    if (q->tail == NULL)
+        q->tail = newh;
+
     return true;
 }
 
@@ -69,7 +99,35 @@ bool q_insert_tail(queue_t *q, char *s)
 {
     /* You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
-    return false;
+    list_ele_t *newh;
+
+    if (q == NULL)
+        return false;
+
+    /* What should you do if the q is NULL? */
+    newh = malloc(sizeof(list_ele_t));
+    if (newh == NULL) {
+        return false;
+    }
+
+    /* Don't forget to allocate space for the string and copy it */
+    newh->value = (char *) malloc(strlen(s) + 1);
+    if (newh->value == NULL) {
+        free(newh);
+        return false;
+    }
+    strcpy(newh->value, s);
+    q->size++;
+
+    /* What if either call to malloc returns NULL? */
+    if (q->head == NULL)
+        q->head = newh;
+
+    newh->next = NULL;
+    if (q->tail)
+        q->tail->next = newh;
+    q->tail = newh;
+    return true;
 }
 
 /*
@@ -82,8 +140,23 @@ bool q_insert_tail(queue_t *q, char *s)
 */
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
+    list_ele_t *n;
+
+    if (q == NULL || q->size == 0)
+        return false;
+
     /* You need to fix up this code. */
-    q->head = q->head->next;
+    if (sp) {
+        strncpy(sp, q->head->value, bufsize - 1);
+        *(sp + bufsize - 1) = '\0';
+    }
+
+    n = q->head->next;
+
+    free(q->head->value);
+    free(q->head);
+    q->head = n;
+    q->size--;
     return true;
 }
 
@@ -93,9 +166,12 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
  */
 int q_size(queue_t *q)
 {
+    if (q == NULL)
+        return 0;
+
     /* You need to write the code for this function */
     /* Remember: It should operate in O(1) time */
-    return 0;
+    return q->size;
 }
 
 /*
@@ -105,7 +181,24 @@ int q_size(queue_t *q)
   (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
   It should rearrange the existing ones.
  */
+// https://www.educative.io/collection/page/5642554087309312/5679846214598656/70003
 void q_reverse(queue_t *q)
 {
     /* You need to write the code for this function */
+    list_ele_t *t, *p, *tmp;
+    if (q == NULL || q->size == 0)
+        return;
+
+    p = q->head->next;
+    t = q->head;
+    q->head = q->tail;
+    q->tail = t;
+    t->next = NULL;
+
+    while (p) {
+        tmp = p;
+        p = p->next;
+        tmp->next = t;
+        t = tmp;
+    }
 }
